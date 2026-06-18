@@ -1,80 +1,70 @@
-export type Message = {
-  id: string
-  role: "user" | "assistant"
-  content: string
+import "server-only"
+
+import { getDb } from "@/lib/db"
+import { threadRowSchema, threadSchema, type Thread, type ThreadRow } from "@/lib/chat-types"
+
+function rowToThread(row: ThreadRow): Thread {
+  return threadSchema.parse({
+    id: row.id,
+    title: row.title,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    messages: [],
+  })
 }
 
-export type Thread = {
-  id: string
-  title: string
-  messages: Message[]
+function parseThreadRow(row: unknown): ThreadRow {
+  return threadRowSchema.parse(row)
 }
 
-export function getThreadById(id: string) {
-  return threads.find((thread) => thread.id === id)
+export async function createThread(title: string | null = null): Promise<Thread> {
+  const db = await getDb()
+  const now = new Date().toISOString()
+  const thread = threadSchema.parse({
+    id: crypto.randomUUID(),
+    title,
+    createdAt: now,
+    updatedAt: now,
+    messages: [],
+  })
+
+  await db.execute({
+    sql: `
+      INSERT INTO threads (id, title, created_at, updated_at)
+      VALUES (?, ?, ?, ?)
+    `,
+    args: [thread.id, thread.title, thread.createdAt, thread.updatedAt],
+  })
+
+  return thread
 }
 
-export const threads: Thread[] = [
-  {
-    id: "1",
-    title: "Welcome chat",
-    messages: [
-      {
-        id: "1-1",
-        role: "user",
-        content: "Hello! What can you help me with?",
-      },
-      {
-        id: "1-2",
-        role: "assistant",
-        content:
-          "Hi there! I can help you brainstorm ideas, answer questions, or walk through code. What would you like to work on?",
-      },
-    ],
-  },
-  {
-    id: "2",
-    title: "Project planning",
-    messages: [
-      {
-        id: "2-1",
-        role: "user",
-        content: "I need to plan a small side project.",
-      },
-      {
-        id: "2-2",
-        role: "assistant",
-        content:
-          "Great! Start by defining the core problem you want to solve and who it's for. Keep the first version as small as possible.",
-      },
-      {
-        id: "2-3",
-        role: "user",
-        content: "It's a chat app with threads.",
-      },
-      {
-        id: "2-4",
-        role: "assistant",
-        content:
-          "Perfect scope. Focus on thread list, message view, and input first. You can add persistence and auth later.",
-      },
-    ],
-  },
-  {
-    id: "3",
-    title: "Weekend ideas",
-    messages: [
-      {
-        id: "3-1",
-        role: "user",
-        content: "Any fun weekend project ideas?",
-      },
-      {
-        id: "3-2",
-        role: "assistant",
-        content:
-          "How about a personal dashboard, a habit tracker, or a recipe organizer? Pick something you'll actually use.",
-      },
-    ],
-  },
-]
+export async function deleteThread(id: string): Promise<void> {
+  const db = await getDb()
+
+  await db.execute({
+    sql: "DELETE FROM threads WHERE id = ?",
+    args: [id],
+  })
+}
+
+export async function listThreads(): Promise<Thread[]> {
+  const db = await getDb()
+  const result = await db.execute(
+    "SELECT id, title, created_at, updated_at FROM threads ORDER BY updated_at DESC",
+  )
+  const rows = result.rows.map(parseThreadRow)
+
+  return rows.map(rowToThread)
+}
+
+export async function getThreadById(id: string): Promise<Thread | undefined> {
+  const db = await getDb()
+  const result = await db.execute({
+    sql: "SELECT id, title, created_at, updated_at FROM threads WHERE id = ?",
+    args: [id],
+  })
+  const row = result.rows[0]
+
+  return row ? rowToThread(parseThreadRow(row)) : undefined
+}

@@ -2,7 +2,7 @@
 
 import { SendIcon } from "lucide-react"
 
-import type { Thread } from "@/lib/chat-data"
+import type { Thread } from "@/lib/chat-types"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"

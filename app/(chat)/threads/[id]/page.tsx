@@ -9,7 +9,7 @@ export default async function ThreadPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const thread = getThreadById(id)
+  const thread = await getThreadById(id)
 
   if (!thread) {
     notFound()
