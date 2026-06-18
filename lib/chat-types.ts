@@ -1,4 +1,4 @@
-import type { ProviderMetadata, TextUIPart } from "ai"
+import type { ProviderMetadata, TextUIPart, UIMessage } from "ai"
 import { z } from "zod"
 
 export const messageSchema = z.object({
@@ -29,6 +29,7 @@ export const threadRowSchema = z.object({
 export type ThreadRow = z.infer<typeof threadRowSchema>
 
 export const USER_MESSAGE_EVENT_KIND = "user_message" as const
+export const ASSISTANT_MESSAGE_EVENT_KIND = "assistant_message" as const
 
 const providerMetadataSchema: z.ZodType<ProviderMetadata> = z.record(
   z.string(),
@@ -45,6 +46,7 @@ export const textUIPartSchema: z.ZodType<TextUIPart> = z.object({
 export const userMessageEventContentsSchema = z.array(textUIPartSchema)
 
 export type UserMessageEventContents = z.infer<typeof userMessageEventContentsSchema>
+export type AssistantMessageEventContents = UIMessage["parts"]
 
 export const eventSchema = z.object({
   id: z.string(),
@@ -64,8 +66,16 @@ export const userMessageEventSchema = eventSchema.extend({
 
 export type UserMessageEvent = z.infer<typeof userMessageEventSchema>
 
+export const assistantMessageEventSchema = eventSchema.extend({
+  kind: z.literal(ASSISTANT_MESSAGE_EVENT_KIND),
+  contents: z.array(z.custom<UIMessage["parts"][number]>()),
+})
+
+export type AssistantMessageEvent = z.infer<typeof assistantMessageEventSchema>
+
 export const typedEventSchema = z.discriminatedUnion("kind", [
   userMessageEventSchema,
+  assistantMessageEventSchema,
 ])
 
 export type TypedEvent = z.infer<typeof typedEventSchema>

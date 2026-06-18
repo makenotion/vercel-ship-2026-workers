@@ -1,29 +1,63 @@
 import "server-only"
 
+import type { UIMessage } from "ai"
+
 import { getDb } from "@/lib/db"
 import {
+  ASSISTANT_MESSAGE_EVENT_KIND,
   USER_MESSAGE_EVENT_KIND,
+  assistantMessageEventSchema,
   eventRowSchema,
   eventSchema,
+  messageSchema,
   threadRowSchema,
   threadSchema,
   typedEventSchema,
+  userMessageEventContentsSchema,
   userMessageEventSchema,
+  type AssistantMessageEvent,
+  type AssistantMessageEventContents,
   type Event,
   type EventRow,
+  type Message,
   type Thread,
   type ThreadRow,
   type TypedEvent,
   type UserMessageEvent,
 } from "@/lib/chat-types"
 
-function rowToThread(row: ThreadRow): Thread {
+function eventPartsToContent(parts: UIMessage["parts"]): string {
+  return parts
+    .filter((part): part is Extract<UIMessage["parts"][number], { type: "text" }> => {
+      return part.type === "text"
+    })
+    .map((part) => part.text)
+    .join("")
+}
+
+function eventToMessage(event: TypedEvent): Message {
+  return messageSchema.parse({
+    id: event.id,
+    role: event.kind === USER_MESSAGE_EVENT_KIND ? "user" : "assistant",
+    content: eventPartsToContent(event.contents),
+  })
+}
+
+function eventToUIMessage(event: TypedEvent): UIMessage {
+  return {
+    id: event.id,
+    role: event.kind === USER_MESSAGE_EVENT_KIND ? "user" : "assistant",
+    parts: event.contents,
+  }
+}
+
+function rowToThread(row: ThreadRow, messages: Message[] = []): Thread {
   return threadSchema.parse({
     id: row.id,
     title: row.title,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    messages: [],
+    messages,
   })
 }
 
@@ -109,6 +143,11 @@ export async function createEvent({
     ],
   })
 
+  await db.execute({
+    sql: "UPDATE threads SET updated_at = ? WHERE id = ?",
+    args: [event.updatedAt, event.threadId],
+  })
+
   return event
 }
 
@@ -121,14 +160,34 @@ export async function createUserMessageEvent({
   text: string
   id?: string
 }): Promise<UserMessageEvent> {
+  const contents = userMessageEventContentsSchema.parse([{ type: "text", text }])
   const event = await createEvent({
     id,
     threadId,
     kind: USER_MESSAGE_EVENT_KIND,
-    contents: [{ type: "text", text }],
+    contents,
   })
 
   return userMessageEventSchema.parse(event)
+}
+
+export async function createAssistantMessageEvent({
+  threadId,
+  contents,
+  id,
+}: {
+  threadId: string
+  contents: AssistantMessageEventContents
+  id?: string
+}): Promise<AssistantMessageEvent> {
+  const event = await createEvent({
+    id,
+    threadId,
+    kind: ASSISTANT_MESSAGE_EVENT_KIND,
+    contents,
+  })
+
+  return assistantMessageEventSchema.parse(event)
 }
 
 export async function deleteThread(id: string): Promise<void> {
@@ -165,6 +224,18 @@ export async function listEventsByThreadId(threadId: string): Promise<TypedEvent
   return rows.map((row) => parseTypedEvent(rowToEvent(row)))
 }
 
+export async function listUIMessagesByThreadId(threadId: string): Promise<UIMessage[]> {
+  const events = await listEventsByThreadId(threadId)
+
+  return events.map(eventToUIMessage)
+}
+
+export async function listMessagesByThreadId(threadId: string): Promise<Message[]> {
+  const events = await listEventsByThreadId(threadId)
+
+  return events.map(eventToMessage)
+}
+
 export async function listThreads(): Promise<Thread[]> {
   const db = await getDb()
   const result = await db.execute(
@@ -172,18 +243,21 @@ export async function listThreads(): Promise<Thread[]> {
   )
   const rows = result.rows.map(parseThreadRow)
 
-  return rows.map(rowToThread)
+  return rows.map((row) => rowToThread(row))
 }
 
 export async function getThreadById(id: string): Promise<Thread | undefined> {
   const db = await getDb()
-  const result = await db.execute({
+  const [result, messages] = await Promise.all([
+    db.execute({
     sql: "SELECT id, title, created_at, updated_at FROM threads WHERE id = ?",
     args: [id],
-  })
+    }),
+    listMessagesByThreadId(id),
+  ])
   const row = result.rows[0]
 
-  return row ? rowToThread(parseThreadRow(row)) : undefined
+  return row ? rowToThread(parseThreadRow(row), messages) : undefined
 }
 
 export async function getEventById(id: string): Promise<TypedEvent | undefined> {
