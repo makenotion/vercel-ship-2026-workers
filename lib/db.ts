@@ -26,12 +26,27 @@ function ensureLocalDirectory(url: string) {
 
 async function initSchema(database: Client) {
   await database.executeMultiple(`
+    PRAGMA foreign_keys = ON;
+
     CREATE TABLE IF NOT EXISTS threads (
       id TEXT PRIMARY KEY,
       title TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS events (
+      id TEXT PRIMARY KEY,
+      thread_id TEXT NOT NULL,
+      kind TEXT NOT NULL,
+      contents TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (thread_id) REFERENCES threads(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS events_thread_id_created_at_idx
+      ON events (thread_id, created_at);
   `)
 }
 

@@ -1,3 +1,4 @@
+import type { ProviderMetadata, TextUIPart } from "ai"
 import { z } from "zod"
 
 export const messageSchema = z.object({
@@ -26,6 +27,59 @@ export const threadRowSchema = z.object({
 })
 
 export type ThreadRow = z.infer<typeof threadRowSchema>
+
+export const USER_MESSAGE_EVENT_KIND = "user_message" as const
+
+const providerMetadataSchema: z.ZodType<ProviderMetadata> = z.record(
+  z.string(),
+  z.record(z.string(), z.any().optional()),
+)
+
+export const textUIPartSchema: z.ZodType<TextUIPart> = z.object({
+  type: z.literal("text"),
+  text: z.string(),
+  state: z.enum(["streaming", "done"]).optional(),
+  providerMetadata: providerMetadataSchema.optional(),
+})
+
+export const userMessageEventContentsSchema = z.array(textUIPartSchema)
+
+export type UserMessageEventContents = z.infer<typeof userMessageEventContentsSchema>
+
+export const eventSchema = z.object({
+  id: z.string(),
+  threadId: z.string(),
+  kind: z.string(),
+  contents: z.unknown(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
+export type Event = z.infer<typeof eventSchema>
+
+export const userMessageEventSchema = eventSchema.extend({
+  kind: z.literal(USER_MESSAGE_EVENT_KIND),
+  contents: userMessageEventContentsSchema,
+})
+
+export type UserMessageEvent = z.infer<typeof userMessageEventSchema>
+
+export const typedEventSchema = z.discriminatedUnion("kind", [
+  userMessageEventSchema,
+])
+
+export type TypedEvent = z.infer<typeof typedEventSchema>
+
+export const eventRowSchema = z.object({
+  id: z.string(),
+  thread_id: z.string(),
+  kind: z.string(),
+  contents: z.string(),
+  created_at: z.string(),
+  updated_at: z.string(),
+})
+
+export type EventRow = z.infer<typeof eventRowSchema>
 
 export function getThreadTitle(thread: Pick<Thread, "title">) {
   return thread.title ?? "Untitled"
