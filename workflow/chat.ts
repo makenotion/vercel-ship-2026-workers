@@ -1,8 +1,11 @@
 import { DurableAgent } from "@workflow/ai/agent";
-import type { ModelMessage, UIMessage, UIMessageChunk } from "ai";
+import type { ModelMessage, Tool, UIMessage, UIMessageChunk } from "ai";
 import { getWritable } from "workflow";
 import { createAssistantMessageEvent } from "@/lib/chat-data";
+import z, { fromJSONSchema } from "zod";
 import { hasPersistableAssistantParts, markTextPartsDone } from "@/lib/chat-parts";
+import { getDb } from "@/lib/db";
+import { CapabilityRecord } from "@/lib/types";
 
 const CHAT_MODEL = "openai/gpt-5-mini";
 
@@ -14,10 +17,25 @@ export type ChatWorkflowInput = {
 export async function chatWorkflow({ threadId, messages }: ChatWorkflowInput) {
   "use workflow";
 
+  const tools = await listTools();
+
+  const toolEntries = tools.map((tool): [key: string, tool: Tool] => {
+    const name = getModelToolName(tool);
+
+    return [
+      name,
+      {
+        description: tool.definition.description,
+        inputSchema: fromJSONSchema(tool.definition.inputSchema),
+        execute: executeTool(tool),
+      },
+    ];
+  });
+
   const agent = new DurableAgent({
     model: CHAT_MODEL,
     instructions: "You are a helpful assistant.",
-    tools: {},
+    tools: Object.fromEntries(toolEntries),
   });
 
   const result = await agent.stream({
@@ -59,4 +77,32 @@ export async function persistAssistantMessage({
     threadId,
     contents: markTextPartsDone(parts),
   });
+}
+
+function executeTool(tool: CapabilityRecord) {
+  return async () => {
+    "use step";
+
+    return {
+      ok: false,
+      error: `Tool ${getModelToolName(tool)} is available, but execution is not wired up yet.`,
+    };
+  };
+}
+
+async function listTools(): Promise<CapabilityRecord[]> {
+  "use step";
+
+  const db = await getDb();
+
+  const tools = await db
+    .execute(`SELECT * FROM capabilities WHERE type = 'tool'`)
+    .then((result) => result.rows)
+    .then(z.array(CapabilityRecord).parse);
+
+  return tools;
+}
+
+function getModelToolName(tool: CapabilityRecord) {
+  return `${tool.worker}_${tool.key}`.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
