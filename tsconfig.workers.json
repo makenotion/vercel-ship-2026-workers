@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "lib": ["esnext"],
+    "paths": {
+      "@/*": ["./*"],
+      "@vercel-ship-2026-workers/worker-tools": ["./packages/worker-tools/src/index.ts"]
+    },
+    "types": ["node"]
+  },
+  "include": ["workers/**/*.ts", "packages/worker-tools/**/*.ts"],
+  "exclude": ["node_modules", ".next"]
+}

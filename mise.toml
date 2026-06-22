@@ -1,0 +1,26 @@
+[tools]
+node = "26.3.1"
+
+[tasks.pre-commit]
+description = "Run pre-commit checks"
+depends = ["check"]
+
+[tasks.check]
+description = "Run all checks"
+depends = ["check:lint", "check:types", "check:format", "check:workers:types"]
+
+[tasks."check:lint"]
+description = "Run ESLint to check for linting errors"
+run = "npm run check:lint"
+
+[tasks."check:types"]
+description = "Run TypeScript to check for type errors"
+run = "npm run check:types"
+
+[tasks."check:format"]
+description = "Run Prettier to check for formatting issues"
+run = "npm run check:format"
+
+[tasks."check:workers:types"]
+description = "Run TypeScript to check for type errors in worker files"
+run = "npm run check:workers:types"
