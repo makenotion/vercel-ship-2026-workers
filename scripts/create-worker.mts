@@ -32,7 +32,7 @@ function createWorkerSource(workerName: string) {
   return `import { z } from "zod"
 import { createTool } from "@vercel-ship-2026-workers/worker-tools"
 
-export const ${workerName} = createTool("${workerName}", {
+export const ${workerName} = createTool({
   description: "",
 
   input: z.object({}),
