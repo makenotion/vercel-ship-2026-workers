@@ -17,17 +17,17 @@ What are we working towards?
 
 <!-- pause -->
 
-- Build with Vercel Sandbox, Vercel Blox, Vercel Workflow
+- Build with Vercel Sandbox, Vercel Blob, Vercel Workflow
 
 <!-- pause -->
 
-- Demo: https://localhost:3000
+- Demo: http://localhost:3000
 
 <!-- end_slide -->
 
 # What is a "Worker"?
 
-- User code efined in ./workers (./workers/greeter/index.ts)
+- User code defined in ./workers (./workers/greeter/index.ts)
 
 <!-- pause -->
 
@@ -39,7 +39,7 @@ What are we working towards?
 
 <!-- pause -->
 
-- Simple SDK returns a "capability" object
+- A simple SDK returns a "capability" object
 
 <!-- pause -->
 
@@ -136,7 +136,7 @@ our database.
    ├──────────────────▶│                │               │
 ```
 
-Each tool invocation gets a brand new sandbox: We don't want environment pollution,
+Each tool invocation gets a brand-new sandbox. We don't want environment pollution,
 even between calls to the same tool.
 
 <!-- end_slide -->
