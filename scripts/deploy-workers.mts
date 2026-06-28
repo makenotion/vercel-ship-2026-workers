@@ -56,7 +56,7 @@ for (const workerPath of allWorkers.slice(0)) {
   }
 
   const moduleDef = ModuleDefinition.parse(output);
-  const defs = Object.values(moduleDef);
+  const defs = Object.entries(moduleDef);
   const now = new Date().toISOString();
 
   console.log("Creating and/or updating capabilities...");
@@ -67,7 +67,7 @@ for (const workerPath of allWorkers.slice(0)) {
             type = EXCLUDED.type,
             definition = EXCLUDED.definition,
             updated_at = EXCLUDED.updated_at`,
-    args: defs.map((def) => [basename, def.name, def.type, JSON.stringify(def), now, now]).flat(),
+    args: defs.map(([key, def]) => [basename, key, def.type, JSON.stringify(def), now, now]).flat(),
   });
 
   console.log("Done\n");
