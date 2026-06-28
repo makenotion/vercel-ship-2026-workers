@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTool } from "@vercel-ship-2026-workers/worker-tools";
 
-export const sayHello = createTool("sayHello", {
+export const sayHello = createTool({
   description: "Greet the user with a personalized message",
 
   input: z.object({
