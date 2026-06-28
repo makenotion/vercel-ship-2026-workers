@@ -3,7 +3,87 @@ title: miniworkers
 author: Vercel Ship 2026
 ---
 
+# Demo
+
+What are we working towards?
+
+<!-- pause -->
+
+- Streaming agent chat
+
+<!-- pause -->
+
+- Tool-calling using untrusted code
+
+<!-- pause -->
+
+- Build with Vercel Sandbox, Vercel Blox, Vercel Workflow
+
+<!-- pause -->
+
+- Demo: https://localhost:3000
+
+<!-- end_slide -->
+
+# What is a "Worker"?
+
+- User code efined in ./workers (./workers/greeter/index.ts)
+
+<!-- pause -->
+
+- Provides:
+  - Export key (tool name)
+  - Tool description
+  - Tool input schema
+  - Tool execution function
+
+<!-- pause -->
+
+- Simple SDK returns a "capability" object
+
+<!-- pause -->
+
+---
+
+1. Built and deployed to blob storage
+
+<!-- pause -->
+
+2. Then exposed to an agent
+
+<!-- pause -->
+
+3. And executed in a sandbox
+
+<!-- end_slide -->
+
+# Builds
+
+Simplified for this workshop
+
+<!-- pause -->
+
+---
+
+1. Compile TypeScript
+<!-- pause -->
+2. Generate package.json
+<!-- pause -->
+3. Install node_modules
+<!-- pause -->
+4. Bundle (bundle.tar.gz)
+
+<!-- end_slide -->
+
 # Deploys
+
+How do we go from user code to tools exposed to our agent?
+
+<!-- pause -->
+
+The code describes itself!
+
+<!-- pause -->
 
 ```text
  ╭─────────────╮  signed read  ┌───────────────────┐

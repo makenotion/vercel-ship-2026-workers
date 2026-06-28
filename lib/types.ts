@@ -15,7 +15,6 @@ export type CapabilityRecord = z.infer<typeof CapabilityRecord>;
 
 export const ToolDefinition = z.object({
   type: z.literal("tool"),
-  name: z.string(),
   description: z.string(),
   inputSchema: z.record(z.string(), z.unknown()),
 });

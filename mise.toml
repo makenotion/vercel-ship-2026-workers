@@ -5,11 +5,11 @@ node = "26.3.1"
 
 [tasks."workshop:preview"]
 description = "Preview the terminal workshop deck with hot reload"
-run = "presenterm workshop/slides.md"
+run = "presenterm workshop/slides.md --enable-snippet-execution"
 
 [tasks."workshop:present"]
 description = "Present the terminal workshop deck"
-run = "presenterm --present --validate-overflows workshop/slides.md"
+run = "presenterm --present --validate-overflows workshop/slides.md --enable-snippet-execution"
 
 [tasks.pre-commit]
 description = "Run pre-commit checks"
