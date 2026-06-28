@@ -115,6 +115,31 @@ our database.
 
 <!-- end_slide -->
 
+# Extract capabilities
+
+```text
+ DEPLOY SCRIPT       BLOB          SANDBOX         WORKER       DATABASE
+       │               │              │               │             │
+       │ upload bundle │              │               │             │
+       ├──────────────▶│              │               │             │
+       │               │ signed read  │               │             │
+       │               ├─────────────▶│ unpack bundle │             │
+       │ load exports  │              │               │             │
+       ├─────────────────────────────▶│ require(".")  │             │
+       │               │              ├──────────────▶│             │
+       │               │              │◀──────────────┤ exports     │
+       │◀─────────────────────────────┤ stdout JSON   │             │
+       │ parse JSON    │              │               │             │
+       │ check schema  │              │               │             │
+       │ upsert by key │              │               │             │
+       ├───────────────────────────────────────────────────────────▶│
+```
+
+The deploy script evaluates each worker in a fresh sandbox, validates every
+exported capability, and stores it under its module export key.
+
+<!-- end_slide -->
+
 # Execute tools
 
 ```text
