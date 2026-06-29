@@ -60,7 +60,8 @@
     "eslint-config-next": "16.2.9",
     "oxfmt": "^0.55.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vercel": "^54.18.3"
   },
   "engines": {
     "node": "26.x",
