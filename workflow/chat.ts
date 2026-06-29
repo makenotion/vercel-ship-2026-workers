@@ -8,7 +8,7 @@ import { getDb } from "@/lib/db";
 import { createSandboxFromBlob } from "@/lib/sandbox.ts";
 import { CapabilityRecord } from "@/lib/types";
 
-const CHAT_MODEL = "openai/gpt-5-mini";
+const CHAT_MODEL = "openai/gpt-5.5";
 
 export type ChatWorkflowInput = {
   threadId: string;
