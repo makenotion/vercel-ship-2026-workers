@@ -8,6 +8,8 @@ const PROJECT = "vercel-ship-2026-workers";
 const BLOB_STORE_ID = "store_KWXlIMyqoknp3VJ6";
 const SANDBOX_PAGE_SIZE = 50;
 const SANDBOX_DELETE_BATCH_SIZE = 10;
+const SNAPSHOT_PAGE_SIZE = 50;
+const SNAPSHOT_DELETE_BATCH_SIZE = 10;
 const SANDBOX_STATUSES = new Set([
   "running",
   "failed",
@@ -97,6 +99,17 @@ function parseSandboxList(output: string) {
   return { names, cursor };
 }
 
+function parseSnapshotList(output: string) {
+  const ids = output
+    .split("\n")
+    .map((line) => line.trim().split(/\s+/))
+    .filter((columns) => columns[1] === "created")
+    .map(([id]) => id);
+  const cursor = output.match(/^More results:.* --cursor (\S+)$/m)?.[1];
+
+  return { ids, cursor };
+}
+
 async function listSandboxes() {
   const names: string[] = [];
   let cursor: string | undefined;
@@ -163,6 +176,69 @@ async function deleteSandboxes(names: string[]) {
   }
 }
 
+async function listSnapshots() {
+  const ids: string[] = [];
+  let cursor: string | undefined;
+  let page = 1;
+
+  do {
+    log(`Listing sandbox snapshots (page ${page})`);
+    const args = [
+      "--yes",
+      "sandbox@latest",
+      "snapshots",
+      "list",
+      "--project",
+      PROJECT,
+      "--scope",
+      TEAM,
+      "--limit",
+      String(SNAPSHOT_PAGE_SIZE),
+    ];
+    if (cursor) {
+      args.push("--cursor", cursor);
+    }
+
+    const output = await run("npx", args, {
+      captureOutput: true,
+      env: { ...process.env, NO_COLOR: "1" },
+    });
+    const pageResult = parseSnapshotList(output);
+
+    ids.push(...pageResult.ids);
+    cursor = pageResult.cursor;
+    page += 1;
+  } while (cursor);
+
+  return ids;
+}
+
+async function deleteSnapshots(ids: string[]) {
+  if (ids.length === 0) {
+    log("No sandbox snapshots to delete");
+    return;
+  }
+
+  log(`Deleting ${ids.length} sandbox snapshot(s)`);
+  for (let index = 0; index < ids.length; index += SNAPSHOT_DELETE_BATCH_SIZE) {
+    const batch = ids.slice(index, index + SNAPSHOT_DELETE_BATCH_SIZE);
+    const batchNumber = index / SNAPSHOT_DELETE_BATCH_SIZE + 1;
+
+    log(`Deleting sandbox snapshot batch ${batchNumber}: ${batch.join(", ")}`);
+    await run("npx", [
+      "--yes",
+      "sandbox@latest",
+      "snapshots",
+      "delete",
+      "--project",
+      PROJECT,
+      "--scope",
+      TEAM,
+      ...batch,
+    ]);
+  }
+}
+
 async function prepare() {
   log("Pulling Vercel environment variables into .env");
   await run("npx", ["vercel", "env", "pull", ".env"]);
@@ -176,6 +252,10 @@ async function prepare() {
   log(`Collecting Vercel Sandboxes for ${TEAM}/${PROJECT}`);
   const sandboxNames = await listSandboxes();
   await deleteSandboxes(sandboxNames);
+
+  log(`Collecting Vercel Sandbox snapshots for ${TEAM}/${PROJECT}`);
+  const snapshotIds = await listSnapshots();
+  await deleteSnapshots(snapshotIds);
 
   log("Preparation complete");
 }
