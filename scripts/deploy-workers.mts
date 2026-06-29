@@ -3,6 +3,8 @@ import { createReadStream } from "node:fs";
 import * as path from "node:path";
 import { put } from "@vercel/blob";
 
+process.loadEnvFile(".env");
+
 const workersDir = path.resolve(import.meta.dirname, "..", "workers");
 
 // Get all directories in the workers directory.
