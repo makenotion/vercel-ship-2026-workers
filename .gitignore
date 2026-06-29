@@ -25,6 +25,7 @@ workers/*/.worker-build*
 
 # local data
 /.data/
+script/*
 
 # misc
 .DS_Store
