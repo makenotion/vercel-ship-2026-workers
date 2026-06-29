@@ -7,7 +7,7 @@ import { hasPersistableAssistantParts, markTextPartsDone } from "@/lib/chat-part
 import { getDb } from "@/lib/db";
 import { CapabilityRecord } from "@/lib/types";
 
-const CHAT_MODEL = "openai/gpt-5-mini";
+const CHAT_MODEL = "openai/gpt-5.5";
 
 export type ChatWorkflowInput = {
   threadId: string;
