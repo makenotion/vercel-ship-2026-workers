@@ -1,26 +1,22 @@
 import { z } from "zod";
 
-const definition = z.transform<string, z.TypeOf<typeof ToolDefinition>>((f) =>
-  ToolDefinition.parse(JSON.parse(f)),
-);
-
-export const CapabilityRecord = z.object({
-  worker: z.string(),
-  key: z.string(),
-  type: z.literal("tool"),
-  definition: z.string().pipe(definition),
-});
-
-export type CapabilityRecord = z.infer<typeof CapabilityRecord>;
-
-export const ToolDefinition = z.object({
-  type: z.literal("tool"),
+export const ToolRow = z.object({
+  workerName: z.string(),
+  name: z.string(),
   description: z.string(),
-  inputSchema: z.record(z.string(), z.unknown()),
+  inputSchema: z.transform<string, Record<string, unknown>>((f) =>
+    z.record(z.string(), z.unknown()).parse(JSON.parse(f)),
+  ),
 });
 
-export type ToolDefinition = z.infer<typeof ToolDefinition>;
+export type ToolRow = z.infer<typeof ToolRow>;
 
-export const ModuleDefinition = z.record(z.string(), ToolDefinition);
+export const ModuleDefinition = z.record(
+  z.string(),
+  z.object({
+    description: z.string(),
+    inputSchema: z.record(z.string(), z.unknown()),
+  }),
+);
 
 export type ModuleDefinition = z.infer<typeof ModuleDefinition>;
