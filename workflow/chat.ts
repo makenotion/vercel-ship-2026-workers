@@ -6,7 +6,7 @@ import z, { fromJSONSchema } from "zod";
 import { hasPersistableAssistantParts, markTextPartsDone } from "@/lib/chat-parts";
 import { getDb } from "@/lib/db";
 import { withSandbox } from "@/lib/sandbox.ts";
-import { CapabilityRecord } from "@/lib/types";
+import { ToolRow } from "@/lib/types";
 
 const CHAT_MODEL = "openai/gpt-5.5";
 
@@ -26,8 +26,8 @@ export async function chatWorkflow({ threadId, messages }: ChatWorkflowInput) {
     return [
       name,
       {
-        description: tool.definition.description,
-        inputSchema: fromJSONSchema(tool.definition.inputSchema),
+        description: tool.description,
+        inputSchema: fromJSONSchema(tool.inputSchema),
         execute: executeTool(tool),
       },
     ];
@@ -80,14 +80,16 @@ export async function persistAssistantMessage({
   });
 }
 
-function executeTool(tool: CapabilityRecord) {
+function executeTool(tool: ToolRow) {
   return async (input: unknown) => {
     "use step";
 
-    return withSandbox(`${tool.worker}/bundle.tar.gz`, async (sandbox) => {
+    const toolName = tool.name; // `tool` doesn't survive the closure in Workflow.
+
+    return await withSandbox(`${tool.workerName}/bundle.tar.gz`, async (sandbox) => {
       const command = await sandbox.runCommand("node", [
         "-e",
-        `require(".")[${JSON.stringify(tool.key)}].execute(${JSON.stringify({ input })})
+        `require(".")[${JSON.stringify(toolName)}].execute(${JSON.stringify({ input })})
         .then(result => console.log(JSON.stringify(result)))
         .catch(error => {
           console.error(error instanceof Error ? error.stack : error);
@@ -120,19 +122,19 @@ function executeTool(tool: CapabilityRecord) {
   };
 }
 
-async function listTools(): Promise<CapabilityRecord[]> {
+async function listTools(): Promise<ToolRow[]> {
   "use step";
 
   const db = await getDb();
 
   const tools = await db
-    .execute(`SELECT * FROM capabilities WHERE type = 'tool'`)
+    .execute("SELECT * FROM tools")
     .then((result) => result.rows)
-    .then(z.array(CapabilityRecord).parse);
+    .then(z.array(ToolRow).parse);
 
   return tools;
 }
 
-function getModelToolName(tool: CapabilityRecord) {
-  return `${tool.worker}_${tool.key}`.replace(/[^a-zA-Z0-9_-]/g, "_");
+function getModelToolName(tool: ToolRow) {
+  return `${tool.workerName}_${tool.name}`.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
