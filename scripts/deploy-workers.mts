@@ -3,7 +3,7 @@ import { createReadStream } from "node:fs";
 import * as path from "node:path";
 import { put } from "@vercel/blob";
 import { getDb } from "../lib/db/core.ts";
-import { createSandboxFromBlob } from "../lib/sandbox.ts";
+import { withSandbox } from "../lib/sandbox.ts";
 import { ModuleDefinition } from "../lib/types.ts";
 
 const workersDir = path.resolve(import.meta.dirname, "..", "workers");
@@ -33,29 +33,26 @@ for (const workerPath of allWorkers.slice(0)) {
 
   console.log("Creating sandbox...");
 
-  const sandbox = await createSandboxFromBlob(blobPathname);
+  const moduleDef = await withSandbox(blobPathname, async (sandbox) => {
+    console.log("Collecting capabilities...");
 
-  console.log("Collecting capabilities...");
+    const command = await sandbox.runCommand(
+      "node",
+      ["-e", 'console.log(JSON.stringify(require(".")))'],
+      {
+        timeoutMs: 10_000,
+      },
+    );
 
-  const command = await sandbox.runCommand(
-    "node",
-    ["-e", 'console.log(JSON.stringify(require(".")))'],
-    {
-      timeoutMs: 10_000,
-    },
-  );
+    const rawOutput = await command.output("stdout");
 
-  const rawOutput = await command.output("stdout");
+    try {
+      return ModuleDefinition.parse(JSON.parse(rawOutput));
+    } catch (error) {
+      throw new Error("Invalid JSON output", { cause: error });
+    }
+  });
 
-  let output: unknown;
-  try {
-    output = JSON.parse(rawOutput);
-  } catch (err) {
-    console.error("Invalid JSON output", err);
-    process.exit(1);
-  }
-
-  const moduleDef = ModuleDefinition.parse(output);
   const defs = Object.entries(moduleDef);
   const now = new Date().toISOString();
 
