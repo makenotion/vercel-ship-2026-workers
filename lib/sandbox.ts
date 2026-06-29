@@ -7,10 +7,11 @@ export const vercelCredentials = {
   token: process.env.VERCEL_API_TOKEN!,
 };
 
-export async function createSandboxFromBlob(
+export async function withSandbox<T>(
   blobPath: string,
+  fn: (sandbox: Sandbox) => Promise<T>,
   opts: Parameters<typeof Sandbox.create>[0] = {},
-): Promise<Sandbox> {
+): Promise<T> {
   const signedToken = await issueSignedToken({
     pathname: blobPath,
   });
@@ -33,5 +34,9 @@ export async function createSandboxFromBlob(
     },
   });
 
-  return sandbox;
+  try {
+    return await fn(sandbox);
+  } finally {
+    await sandbox.delete();
+  }
 }
