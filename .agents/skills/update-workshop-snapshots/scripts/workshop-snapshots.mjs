@@ -143,7 +143,7 @@ function checkpointAssertions() {
       label: "step 01 retains deployment TODOs",
       ref: TAGS[0],
       path: "scripts/deploy-workers.mts",
-      contains: ["TODO: Upload the worker bundle", "TODO: Persist those capabilities"],
+      contains: ["TODO: Upload the worker bundle", "TODO: Persist those tools"],
     },
     {
       label: "step 01 keeps chat tools empty",
@@ -155,7 +155,7 @@ function checkpointAssertions() {
       label: "step 02 uploads the bundle but retains later TODOs",
       ref: TAGS[1],
       path: "scripts/deploy-workers.mts",
-      contains: ["await put(", "TODO: Create a sandbox", "TODO: Persist those capabilities"],
+      contains: ["await put(", "TODO: Create a sandbox", "TODO: Persist those tools"],
     },
     {
       label: "step 02 keeps chat tools empty",
@@ -168,7 +168,7 @@ function checkpointAssertions() {
         label: `${ref} completes worker deployment`,
         ref,
         path: "scripts/deploy-workers.mts",
-        contains: ["ModuleDefinition.parse", "Object.entries(moduleDef)"],
+        contains: ["WorkersJSModule.parse", "Object.entries(moduleDef)"],
         excludes: ["TODO:"],
       },
       {

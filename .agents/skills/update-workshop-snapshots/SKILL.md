@@ -26,8 +26,8 @@ Preserve the teaching progression while keeping shared workshop material synchro
 | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `main`                           | Complete worker deployment, tool discovery, and sandboxed tool execution.                                                         |
 | `workshop/01-start`              | Deployment TODOs remain; chat agent has `tools: {}`.                                                                              |
-| `workshop/02-blob-upload`        | Bundle upload is complete; sandbox creation, capability extraction, and persistence remain TODOs.                                 |
-| `workshop/03-worker-deploy`      | Worker deployment, capability extraction, validation, and persistence are complete; chat tools remain empty.                      |
+| `workshop/02-blob-upload`        | Bundle upload is complete; sandbox creation, tool extraction, and persistence remain TODOs.                                       |
+| `workshop/03-worker-deploy`      | Worker deployment, tool extraction, validation, and persistence are complete; chat tools remain empty.                            |
 | `workshop/04-chat-empty-tools`   | Empty-tools chat checkpoint. Its tree is intentionally the same as step 3 today.                                                  |
 | `workshop/05-chat-list-tools`    | Stored tools are listed and exposed to the model; execution still returns the intentional “not wired up” result.                  |
 | `workshop/06-chat-execute-tools` | Tool execution runs in a fresh sandbox. This is the completed workshop state and should match `main` for workshop implementation. |
@@ -39,7 +39,7 @@ Use this placement guide unless repository evidence or the user's request says o
 | Slides, presenter configuration, repo-local agent guidance, and other shared workshop material | `main` and all workshop tags                                         |
 | Baseline worker SDK, types, examples, or build behavior available before the exercises         | `main` and all workshop tags, with later consumers updated as needed |
 | Blob-upload solution                                                                           | `main` and tags 02–06; retain the upload TODO in tag 01              |
-| Worker deployment or capability-extraction solution                                            | `main` and tags 03–06; retain the relevant TODOs in tags 01–02       |
+| Worker deployment or tool-extraction solution                                                  | `main` and tags 03–06; retain the relevant TODOs in tags 01–02       |
 | Tool discovery/listing solution                                                                | `main` and tags 05–06; keep `tools: {}` in tags 01–04                |
 | Tool execution solution                                                                        | `main` and tag 06; keep the stub executor in tag 05                  |
 
