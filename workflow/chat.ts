@@ -4,7 +4,7 @@ import { getWritable } from "workflow";
 import { createAssistantMessageEvent } from "@/lib/chat-data";
 import { hasPersistableAssistantParts, markTextPartsDone } from "@/lib/chat-parts";
 
-const CHAT_MODEL = "openai/gpt-5-mini";
+const CHAT_MODEL = "openai/gpt-5.5";
 
 export type ChatWorkflowInput = {
   threadId: string;
