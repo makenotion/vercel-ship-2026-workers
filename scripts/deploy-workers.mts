@@ -4,7 +4,7 @@ import * as path from "node:path";
 import { put } from "@vercel/blob";
 import { getDb } from "../lib/db/core.ts";
 import { withSandbox } from "../lib/sandbox.ts";
-import { ModuleDefinition } from "../lib/types.ts";
+import { ModuleDefinition as WorkersJSModule } from "../lib/types.ts";
 
 const workersDir = path.resolve(import.meta.dirname, "..", "workers");
 
@@ -17,54 +17,59 @@ const allWorkers = await fs
 
 const db = await getDb();
 
-for (const workerPath of allWorkers.slice(0)) {
-  const basename = path.basename(workerPath);
+for (const workerAbsPath of allWorkers.slice(0)) {
+  const workerName = path.basename(workerAbsPath);
 
-  console.log(`Deploying worker "${basename}"...`);
+  console.log(`Deploying worker "${workerName}"...`);
   console.log("Uploading source blob...");
 
-  const blobPathname = `${basename}/bundle.tar.gz`;
-  const readStream = createReadStream(path.join(workerPath, "bundle.tar.gz"));
+  const blobKey = `${workerName}/bundle.tar.gz`;
+  const readStream = createReadStream(path.join(workerAbsPath, "bundle.tar.gz"));
 
-  await put(blobPathname, readStream, {
+  await put(blobKey, readStream, {
     access: "private",
     allowOverwrite: true,
   });
 
   console.log("Creating sandbox...");
 
-  const moduleDef = await withSandbox(blobPathname, async (sandbox) => {
-    console.log("Collecting capabilities...");
+  const stdout = await withSandbox(blobKey, (sandbox) =>
+    sandbox
+      .runCommand("node", ["-e", 'console.log(JSON.stringify(require(".")))'])
+      .then((command) => command.output("stdout")),
+  );
 
-    const command = await sandbox.runCommand(
-      "node",
-      ["-e", 'console.log(JSON.stringify(require(".")))'],
-      {
-        timeoutMs: 10_000,
-      },
-    );
+  const moduleDef = WorkersJSModule.parse(JSON.parse(stdout));
+  const tools = Object.entries(moduleDef);
 
-    const rawOutput = await command.output("stdout");
+  console.log("Creating and/or updating tools...");
 
-    try {
-      return ModuleDefinition.parse(JSON.parse(rawOutput));
-    } catch (error) {
-      throw new Error("Invalid JSON output", { cause: error });
-    }
-  });
-
-  const defs = Object.entries(moduleDef);
   const now = new Date().toISOString();
 
-  console.log("Creating and/or updating capabilities...");
-
   await db.execute({
-    sql: `INSERT INTO capabilities (worker, key, type, definition, created_at, updated_at) VALUES ${defs.map(() => "(?, ?, ?, ?, ?, ?)").join(", ")}
-          ON CONFLICT(worker, key) DO UPDATE SET
-            type = EXCLUDED.type,
-            definition = EXCLUDED.definition,
-            updated_at = EXCLUDED.updated_at`,
-    args: defs.map(([key, def]) => [basename, key, def.type, JSON.stringify(def), now, now]).flat(),
+    sql: `
+      INSERT INTO tools (
+        workerName,
+        name,
+        description,
+        inputSchema,
+        created_at,
+        updated_at
+      ) VALUES ${tools.map(() => "(?, ?, ?, ?, ?, ?)").join(", ")}
+        ON CONFLICT(workerName, name) DO UPDATE SET
+          description = EXCLUDED.description,
+          inputSchema = EXCLUDED.inputSchema,
+          updated_at = EXCLUDED.updated_at`,
+    args: tools
+      .map(([toolName, def]) => [
+        workerName,
+        toolName,
+        def.description,
+        JSON.stringify(def.inputSchema),
+        now,
+        now,
+      ])
+      .flat(),
   });
 
   console.log("Done\n");
