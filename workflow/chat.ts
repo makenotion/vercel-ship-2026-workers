@@ -5,7 +5,7 @@ import { createAssistantMessageEvent } from "@/lib/chat-data";
 import z, { fromJSONSchema } from "zod";
 import { hasPersistableAssistantParts, markTextPartsDone } from "@/lib/chat-parts";
 import { getDb } from "@/lib/db";
-import { createSandboxFromBlob } from "@/lib/sandbox.ts";
+import { withSandbox } from "@/lib/sandbox.ts";
 import { CapabilityRecord } from "@/lib/types";
 
 const CHAT_MODEL = "openai/gpt-5.5";
@@ -84,9 +84,7 @@ function executeTool(tool: CapabilityRecord) {
   return async (input: unknown) => {
     "use step";
 
-    const sandbox = await createSandboxFromBlob(`${tool.worker}/bundle.tar.gz`);
-
-    try {
+    return withSandbox(`${tool.worker}/bundle.tar.gz`, async (sandbox) => {
       const command = await sandbox.runCommand("node", [
         "-e",
         `require(".")[${JSON.stringify(tool.key)}].execute(${JSON.stringify({ input })})
@@ -118,9 +116,7 @@ function executeTool(tool: CapabilityRecord) {
           error: `Failed to parse tool output as JSON: ${error instanceof Error ? error.message : String(error)}`,
         };
       }
-    } finally {
-      await sandbox.stop();
-    }
+    });
   };
 }
 
