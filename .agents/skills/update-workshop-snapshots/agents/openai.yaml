@@ -1,0 +1,4 @@
+interface:
+  display_name: "Update Workshop Snapshots"
+  short_description: "Maintain main and all workshop checkpoint tags"
+  default_prompt: "Use $update-workshop-snapshots to update the workshop while preserving the intended state of main and every checkpoint tag."
