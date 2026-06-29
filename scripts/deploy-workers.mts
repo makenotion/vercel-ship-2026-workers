@@ -2,9 +2,14 @@ import * as fs from "node:fs/promises";
 import { createReadStream } from "node:fs";
 import * as path from "node:path";
 import { put } from "@vercel/blob";
-import { getDb } from "../lib/db/core.ts";
-import { withSandbox } from "../lib/sandbox.ts";
 import { ModuleDefinition as WorkersJSModule } from "../lib/types.ts";
+
+process.loadEnvFile(".env");
+
+const [{ getDb }, { withSandbox }] = await Promise.all([
+  import("../lib/db/core.ts"),
+  import("../lib/sandbox.ts"),
+]);
 
 const workersDir = path.resolve(import.meta.dirname, "..", "workers");
 
