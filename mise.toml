@@ -17,7 +17,7 @@ depends = ["check"]
 
 [tasks.check]
 description = "Run all checks"
-depends = ["check:lint", "check:types", "check:format", "check:workers:types"]
+depends = ["check:lint", "check:types", "check:format", "check:workers:types", "test:workers"]
 
 [tasks."check:lint"]
 description = "Run ESLint to check for linting errors"
@@ -34,3 +34,7 @@ run = "npm run check:format"
 [tasks."check:workers:types"]
 description = "Run TypeScript to check for type errors in worker files"
 run = "npm run check:workers:types"
+
+[tasks."test:workers"]
+description = "Run worker tests"
+run = "npm run test:workers"
