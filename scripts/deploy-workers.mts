@@ -10,13 +10,13 @@ const allWorkers = await fs
     dirs.filter((dir) => dir.isDirectory()).map((dir) => path.join(workersDir, dir.name)),
   );
 
-for (const workerPath of allWorkers.slice(0)) {
-  const basename = path.basename(workerPath);
+for (const workerAbsPath of allWorkers.slice(0)) {
+  const workerName = path.basename(workerAbsPath);
 
-  console.log(`Deploying worker "${basename}"...`);
+  console.log(`Deploying worker "${workerName}"...`);
   console.log("TODO: Upload the worker bundle to Vercel Blob.");
   console.log("TODO: Create a sandbox from the uploaded bundle.");
-  console.log("TODO: Collect the worker's exported capabilities.");
-  console.log("TODO: Persist those capabilities for the chat workflow.");
+  console.log("TODO: Collect the worker's exported tools.");
+  console.log("TODO: Persist those tools for the chat workflow.");
   console.log("Done\n");
 }
