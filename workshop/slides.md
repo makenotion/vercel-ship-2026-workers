@@ -39,7 +39,7 @@ What are we working towards?
 
 <!-- pause -->
 
-- A simple SDK returns a "capability" object
+- A simple SDK returns a "tool" object
 
 <!-- pause -->
 
@@ -102,20 +102,20 @@ The code describes itself!
                                │ ModuleDefinition │
                                │ validates shape  │
                                └─────────┬────────┘
-                                         │ UPSERT (worker, key)
+                                         │ UPSERT (workerName, name)
                                          ▼
-                                ╭───────────────╮
-                                │ capability DB │
-                                ╰───────────────╯
+                                 ╭───────────────╮
+                                 │ tools table   │
+                                 ╰───────────────╯
 ```
 
 We deploy our artifact, and then run JavaScript on the sandbox itself that
-gives us back a description of the worker's capabilities. Those get stored in
+gives us back a description of the worker's tools. Those get stored in
 our database.
 
 <!-- end_slide -->
 
-# Extract capabilities
+# Extract tools
 
 ```text
  DEPLOY SCRIPT       BLOB          SANDBOX         WORKER       DATABASE
@@ -131,12 +131,12 @@ our database.
        │◀─────────────────────────────┤ stdout JSON   │             │
        │ parse JSON    │              │               │             │
        │ check schema  │              │               │             │
-       │ upsert by key │              │               │             │
+       │ upsert by name│              │               │             │
        ├───────────────────────────────────────────────────────────▶│
 ```
 
 The deploy script evaluates each worker in a fresh sandbox, validates every
-exported capability, and stores it under its module export key.
+exported tool, and stores it under its module export key.
 
 <!-- end_slide -->
 

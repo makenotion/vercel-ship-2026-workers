@@ -52,14 +52,14 @@ async function initSchema(database: Client) {
       updated_at TEXT NOT NULL
     );
 
-    CREATE TABLE IF NOT EXISTS capabilities (
-      key TEXT,
-      worker TEXT NOT NULL,
-      type TEXT NOT NULL,
-      definition JSON NOT NULL,
+    CREATE TABLE IF NOT EXISTS tools (
+      workerName TEXT NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL,
+      inputSchema JSONB NOT NULL,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
-      PRIMARY KEY (worker, key)
+      PRIMARY KEY (workerName, name)
     );
   `);
 }
