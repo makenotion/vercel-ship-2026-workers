@@ -8,16 +8,16 @@ export const vercelCredentials = {
 };
 
 export async function withSandbox<T>(
-  blobPath: string,
+  blobKey: string,
   fn: (sandbox: Sandbox) => Promise<T>,
   opts: Parameters<typeof Sandbox.create>[0] = {},
 ): Promise<T> {
   const signedToken = await issueSignedToken({
-    pathname: blobPath,
+    pathname: blobKey,
   });
 
   const { presignedUrl } = await presignUrl(signedToken, {
-    pathname: blobPath,
+    pathname: blobKey,
     access: "private",
     operation: "get",
   });
