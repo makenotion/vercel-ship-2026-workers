@@ -12,22 +12,22 @@ const allWorkers = await fs
     dirs.filter((dir) => dir.isDirectory()).map((dir) => path.join(workersDir, dir.name)),
   );
 
-for (const workerPath of allWorkers.slice(0)) {
-  const basename = path.basename(workerPath);
+for (const workerAbsPath of allWorkers.slice(0)) {
+  const workerName = path.basename(workerAbsPath);
 
-  console.log(`Deploying worker "${basename}"...`);
+  console.log(`Deploying worker "${workerName}"...`);
   console.log("Uploading source blob...");
 
-  const blobPathname = `${basename}/bundle.tar.gz`;
-  const readStream = createReadStream(path.join(workerPath, "bundle.tar.gz"));
+  const blobKey = `${workerName}/bundle.tar.gz`;
+  const readStream = createReadStream(path.join(workerAbsPath, "bundle.tar.gz"));
 
-  await put(blobPathname, readStream, {
+  await put(blobKey, readStream, {
     access: "private",
     allowOverwrite: true,
   });
 
   console.log("TODO: Create a sandbox from the uploaded bundle.");
-  console.log("TODO: Collect the worker's exported capabilities.");
-  console.log("TODO: Persist those capabilities for the chat workflow.");
+  console.log("TODO: Collect the worker's exported tools.");
+  console.log("TODO: Persist those tools for the chat workflow.");
   console.log("Done\n");
 }
