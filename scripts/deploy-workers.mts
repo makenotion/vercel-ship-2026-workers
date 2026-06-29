@@ -1,6 +1,8 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
+process.loadEnvFile(".env");
+
 const workersDir = path.resolve(import.meta.dirname, "..", "workers");
 
 // Get all directories in the workers directory.
