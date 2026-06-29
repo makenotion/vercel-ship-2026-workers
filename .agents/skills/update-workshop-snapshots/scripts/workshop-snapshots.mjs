@@ -183,13 +183,13 @@ function checkpointAssertions() {
       ref: TAGS[4],
       path: "workflow/chat.ts",
       contains: ["const tools = await listTools()", "not wired up yet"],
-      excludes: ["createSandboxFromBlob"],
+      excludes: ["withSandbox"],
     },
     ...[TAGS[5], "main"].map((ref) => ({
       label: `${ref} executes tools in a sandbox`,
       ref,
       path: "workflow/chat.ts",
-      contains: ["const tools = await listTools()", "createSandboxFromBlob"],
+      contains: ["const tools = await listTools()", "withSandbox"],
       excludes: ["not wired up yet"],
     })),
   ];
