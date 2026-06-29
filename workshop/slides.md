@@ -194,3 +194,13 @@ even between calls to the same tool.
 
 The agent's runtime adapter creates a fresh sandbox, calls the selected export,
 parses its JSON output, and returns the result to the model.
+
+<!-- end_slide -->
+
+# What Next?
+
+- Deploy from GitHub
+<!-- pause -->
+- Safely store and inject secrets (+ credential brokering)
+<!-- pause -->
+- Agents write their own workers
