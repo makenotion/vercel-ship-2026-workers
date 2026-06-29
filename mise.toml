@@ -3,10 +3,6 @@
 glow = "latest"
 node = "26.3.1"
 
-[tasks.prepare]
-description = "Reset the workshop database, blobs, and sandboxes"
-run = "node script/prepare.mts"
-
 [tasks."workshop:preview"]
 description = "Preview the terminal workshop deck with hot reload"
 run = "presenterm workshop/slides.md --enable-snippet-execution"
