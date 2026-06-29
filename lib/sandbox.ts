@@ -12,14 +12,17 @@ export async function withSandbox<T>(
   fn: (sandbox: Sandbox) => Promise<T>,
   opts: Parameters<typeof Sandbox.create>[0] = {},
 ): Promise<T> {
+  const validUntil = Date.now() + 60 * 1000;
   const signedToken = await issueSignedToken({
     pathname: blobKey,
+    validUntil,
   });
 
   const { presignedUrl } = await presignUrl(signedToken, {
     pathname: blobKey,
     access: "private",
     operation: "get",
+    validUntil,
   });
 
   const sandbox = await Sandbox.create({
