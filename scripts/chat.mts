@@ -4,6 +4,7 @@ import { issueSignedToken, presignUrl, put } from "@vercel/blob";
 import { Sandbox } from "@vercel/sandbox";
 import { ToolLoopAgent, type ToolSet } from "ai";
 import { createReadStream, readdirSync } from "node:fs";
+import { z } from "zod";
 import Debug from "debug";
 
 const log = Debug("workers");
@@ -29,7 +30,12 @@ for (const workerName of readdirSync("./workers")) {
   const sandbox = await createSandbox(blobKey);
   log(`Created sandbox ${sandbox.name}`);
 
-  console.log("3. Extract tool data");
+  // Step 3: Extract tool data
+  // TIP: Best-effort sandbox stop, but:
+  //     - Ensure clean-up in an async job
+  const workerTools = await extractTools(sandbox).finally(() => sandbox.delete());
+  log(`Extracted tools %o`, workerTools);
+
   console.log("4. Create AI SDK tools");
   log("Complete");
 }
@@ -109,4 +115,30 @@ async function createSandbox(blobKey: string) {
   });
 
   return sandbox;
+}
+
+async function extractTools(sandbox: Sandbox) {
+  const ModuleDefinition = z.record(
+    z.string(),
+    z.object({
+      description: z.string(),
+      inputSchema: z.record(z.string(), z.unknown()),
+    }),
+  );
+
+  // TIP: Be very careful with this output:
+  //     - Look for tags! e.g. <__worker_output__>{}</__worker_output__>
+  //     - Limit the logs you consume (stream the output)
+  //     - Limit the logs you parse
+  //     - Verify shape using libraries like Zod
+  const command = await sandbox.runCommand("node", [
+    "-e",
+    `console.log(JSON.stringify(require("./index.js")))`,
+  ]);
+
+  const stdout = await command.output("stdout");
+
+  const moduleDefinition = ModuleDefinition.parse(JSON.parse(stdout));
+
+  return moduleDefinition;
 }
