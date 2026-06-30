@@ -1,0 +1,37 @@
+[tools]
+"github:mfontanini/presenterm" = "0.16.1"
+glow = "latest"
+node = "26.3.1"
+
+
+[tasks."workshop:preview"]
+description = "Preview the terminal workshop deck with hot reload"
+run = "presenterm workshop/slides.md --enable-snippet-execution"
+
+[tasks."workshop:present"]
+description = "Present the terminal workshop deck"
+run = "presenterm --present --validate-overflows workshop/slides.md --enable-snippet-execution"
+
+[tasks.pre-commit]
+description = "Run pre-commit checks"
+depends = ["check"]
+
+[tasks.check]
+description = "Run all checks"
+depends = ["check:types", "check:format", "check:workers:types", "test:workers"]
+
+[tasks."check:types"]
+description = "Run TypeScript to check for type errors"
+run = "npm run check:types"
+
+[tasks."check:format"]
+description = "Run Prettier to check for formatting issues"
+run = "npm run check:format"
+
+[tasks."check:workers:types"]
+description = "Run TypeScript to check for type errors in worker files"
+run = "npm run check:workers:types"
+
+[tasks."test:workers"]
+description = "Run worker tests"
+run = "npm run test:workers"

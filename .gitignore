@@ -1,0 +1,21 @@
+# dependencies
+/node_modules
+
+# workers code
+workers/*/bundle.tar.gz
+workers/*/*.tgz
+workers/*/.worker-build*
+
+# misc
+.DS_Store
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+/.swc
