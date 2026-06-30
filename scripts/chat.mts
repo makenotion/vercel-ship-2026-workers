@@ -4,7 +4,7 @@ import { issueSignedToken, presignUrl, put } from "@vercel/blob";
 import { Sandbox } from "@vercel/sandbox";
 import { ToolLoopAgent, type ToolSet } from "ai";
 import { createReadStream, readdirSync } from "node:fs";
-import { z } from "zod";
+import { fromJSONSchema, z } from "zod";
 import Debug from "debug";
 
 const log = Debug("workers");
@@ -17,7 +17,7 @@ export const vercelCredentials = {
   token: process.env.VERCEL_API_TOKEN!,
 };
 
-const tools: ToolSet = {};
+let tools: ToolSet = {};
 
 for (const workerName of readdirSync("./workers")) {
   log(`Deploying ${workerName}...`);
@@ -36,7 +36,22 @@ for (const workerName of readdirSync("./workers")) {
   const workerTools = await extractTools(sandbox).finally(() => sandbox.delete());
   log(`Extracted tools %o`, workerTools);
 
-  console.log("4. Create AI SDK tools");
+  const newTools = Object.fromEntries(
+    Object.entries(workerTools).map(([tool, info]) => [
+      tool,
+      {
+        ...info,
+        inputSchema: fromJSONSchema(info.inputSchema),
+        execute: executeTool(blobKey, tool),
+      },
+    ]),
+  );
+
+  tools = {
+    ...tools,
+    ...newTools,
+  };
+
   log("Complete");
 }
 
@@ -141,4 +156,29 @@ async function extractTools(sandbox: Sandbox) {
   const moduleDefinition = ModuleDefinition.parse(JSON.parse(stdout));
 
   return moduleDefinition;
+}
+
+function executeTool(blobKey: string, toolName: string) {
+  return async (input: unknown) => {
+    const sandbox = await createSandbox(blobKey);
+
+    // TIP: The same output verification rules apply here.
+    // TIP: Write an SDK that ensures that "execute()" returns serializable values
+    // TIP: Ensure process exits (users can leave dangling timers)
+    const command = await sandbox.runCommand("node", [
+      "-e",
+      `require("./index.js")["${toolName}"].execute(${JSON.stringify(input)})
+        .then(JSON.stringify)
+        .then(console.log)
+        .then(() => process.exit(0))
+        .catch(err => {
+          console.error(err)
+          process.exit(1)
+        })`,
+    ]);
+
+    const stdout = await command.output("stdout").finally(() => sandbox.delete());
+
+    return JSON.parse(stdout);
+  };
 }
