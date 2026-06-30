@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
+import { put } from "@vercel/blob";
 import { ToolLoopAgent, type ToolSet } from "ai";
-import { readdirSync } from "node:fs";
+import { createReadStream, readdirSync } from "node:fs";
 import Debug from "debug";
 
 const log = Debug("workers");
@@ -13,7 +14,10 @@ const tools: ToolSet = {};
 for (const workerName of readdirSync("./workers")) {
   log(`Deploying ${workerName}...`);
 
-  console.log("1. Upload source code");
+  // Step 1: Upload source code
+  const blobKey = await uploadSource(workerName);
+  log(`Uploaded ${blobKey}`);
+
   console.log("2. Create a sandbox");
   console.log("3. Extract tool data");
   console.log("4. Create AI SDK tools");
@@ -54,4 +58,16 @@ for await (const part of stream.fullStream) {
       process.stdout.write(part.text);
       break;
   }
+}
+
+async function uploadSource(workerName: string) {
+  const blobKey = `${workerName}/bundle.tar.gz`;
+  const bundleStream = createReadStream(`./workers/${blobKey}`);
+
+  await put(blobKey, bundleStream, {
+    access: "private",
+    allowOverwrite: true,
+  });
+
+  return blobKey;
 }
