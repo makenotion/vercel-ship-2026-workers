@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { put } from "@vercel/blob";
+import { issueSignedToken, presignUrl, put } from "@vercel/blob";
+import { Sandbox } from "@vercel/sandbox";
 import { ToolLoopAgent, type ToolSet } from "ai";
 import { createReadStream, readdirSync } from "node:fs";
 import Debug from "debug";
@@ -8,6 +9,12 @@ import Debug from "debug";
 const log = Debug("workers");
 
 process.loadEnvFile(".env");
+
+export const vercelCredentials = {
+  teamId: process.env.VERCEL_TEAM_ID!,
+  projectId: process.env.VERCEL_PROJECT_ID!,
+  token: process.env.VERCEL_API_TOKEN!,
+};
 
 const tools: ToolSet = {};
 
@@ -18,7 +25,10 @@ for (const workerName of readdirSync("./workers")) {
   const blobKey = await uploadSource(workerName);
   log(`Uploaded ${blobKey}`);
 
-  console.log("2. Create a sandbox");
+  // Step 2: Create a sandbox
+  const sandbox = await createSandbox(blobKey);
+  log(`Created sandbox ${sandbox.name}`);
+
   console.log("3. Extract tool data");
   console.log("4. Create AI SDK tools");
   log("Complete");
@@ -70,4 +80,33 @@ async function uploadSource(workerName: string) {
   });
 
   return blobKey;
+}
+
+async function createSandbox(blobKey: string) {
+  const inTenMinutes = Date.now() + 60 * 1000 * 10;
+
+  const signedToken = await issueSignedToken({
+    pathname: blobKey,
+    validUntil: inTenMinutes,
+    operations: ["get"],
+  });
+
+  const signResult = await presignUrl(signedToken, {
+    operation: "get",
+    pathname: blobKey,
+    access: "private",
+    validUntil: inTenMinutes,
+  });
+
+  // TIP: Use snapshotting! Omitted for brevity in our example.
+  const sandbox = await Sandbox.create({
+    ...vercelCredentials,
+    persistent: false,
+    source: {
+      type: "tarball",
+      url: signResult.presignedUrl,
+    },
+  });
+
+  return sandbox;
 }
